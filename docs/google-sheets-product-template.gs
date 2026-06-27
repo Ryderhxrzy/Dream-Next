@@ -39,8 +39,10 @@
  *       Variant Style / Variant Width / Variant Dimension / Variant Height /
  *       Variant Price SRP / DP / Member / Variant Qty / Variant Images as needed.
  *     • The RED columns "Variant PV (AUTO)" and "Variant Reversed PV Multiplier
- *       (AUTO)" are computed by the system on import — LEAVE THEM BLANK (the same
- *       as the product-level "Product PV (AUTO)" red columns).
+ *       (AUTO)" auto-calculate in the sheet from the Variant Price DP (the same
+ *       as the product-level "Product PV (AUTO)" red columns) — LEAVE THEM
+ *       BLANK; the formulas fill them in for you. (For the High-End tier the
+ *       multiplier stays blank until that formula is finalised.)
  *   The importer groups rows by Parent SKU and sets the product to "Has Variants"
  *   automatically. For a simple product with no variants, just leave the variant
  *   columns blank.
@@ -63,6 +65,11 @@ const SPREADSHEET_ID = ""
 const SHEET_PRODUCTS = "Products"
 const SHEET_CATSUB = "_CatSub"
 const SHEET_COMPBRAND = "_CompBrand"
+// Visible reference sheet of [Color Name, Hex] pairs. The "Color Hex" column
+// VLOOKUPs against it, so you can add/adjust colors here and every row picks up
+// the change. Seeded with defaults only when it doesn't already exist, so your
+// edits survive a "Build / Refresh template".
+const SHEET_HEXCOLOR = "HEX COLOR"
 
 // How many rows are pre-armed with the flat dropdowns (Category, Merchant, etc.).
 const DATA_ROWS = 500
@@ -103,7 +110,7 @@ const HEADERS = [
   "Verified",
   // --- Variant columns (one row per variant; see header comment) -------------
   // Free-typed columns + one Variant Status dropdown. The two "(AUTO)" columns
-  // are computed by the system on import — leave them blank.
+  // auto-calculate in the sheet (PV = Variant Price DP x derived multiplier).
   "Variant SKU",
   "Variant Name",
   "Color Name",
@@ -127,7 +134,7 @@ const HEADERS = [
 // match the importer's variant aliases where applicable (pv_sku, pv_name,
 // pv_color, pv_color_hex, pv_size, pv_style, pv_width, pv_dimension, pv_height,
 // pv_price_*, pv_prodpv, pv_qty, pv_status, pv_images). Columns containing
-// "(AUTO)" are computed by the backend on import and are tinted RED.
+// "(AUTO)" are auto-calculated by in-sheet formulas and are tinted RED.
 const VARIANT_HEADERS = [
   "Variant SKU",
   "Variant Name",
@@ -171,8 +178,123 @@ const ROOMS = [
 const TIERS = ["Low-End", "High-End"]
 const TYPES = ["Simple", "Has Variants"]
 const STATUSES = ["Active", "Inactive"]
-const BOOL = ["Yes", "No"]
+// Ready-made Warranty options — keep in sync with AddProductModal WARRANTY_OPTIONS.
+const WARRANTIES = [
+  "No Warranty",
+  "15 Days Warranty",
+  "1 Month Warranty",
+  "2 Months Warranty",
+  "3 Months Warranty",
+  "6 Months Warranty",
+  "9 Months Warranty",
+  "1 Year Warranty",
+]
 const UNASSIGNED_COMPANY = "— Unassigned —"
+
+// Color Name -> Color Hex defaults. These seed the visible "HEX COLOR" sheet,
+// which the "Color Hex" column VLOOKUPs against. Curated for furniture/home
+// decor; keys are lowercased and include common synonyms (grey/gray). To change
+// the palette, edit the hexes here (re-seeds a fresh sheet) or edit the "HEX
+// COLOR" sheet directly (preserved across rebuilds).
+const COLOR_HEX = {
+  // Neutrals & whites
+  white: "#FFFFFF",
+  "off white": "#F2EFE9",
+  "off-white": "#F2EFE9",
+  ivory: "#FFFFF0",
+  cream: "#F5EFE0",
+  pearl: "#EAE0C8",
+  linen: "#EFE6D8",
+  beige: "#E8DCC4",
+  sand: "#D9C7A3",
+  tan: "#D2B48C",
+  taupe: "#8B7E6A",
+  khaki: "#C3B091",
+  greige: "#BBADA0",
+  // Greys & blacks
+  "white smoke": "#F5F5F5",
+  "light gray": "#D3D3D3",
+  "light grey": "#D3D3D3",
+  silver: "#C0C0C0",
+  gray: "#808080",
+  grey: "#808080",
+  "dark gray": "#5A5A5A",
+  "dark grey": "#5A5A5A",
+  slate: "#5C6670",
+  charcoal: "#36454F",
+  graphite: "#33373B",
+  black: "#1A1A1A",
+  // Reds, pinks
+  red: "#D32F2F",
+  scarlet: "#E23D28",
+  crimson: "#B81D24",
+  cherry: "#9E1B32",
+  maroon: "#6E1423",
+  burgundy: "#5C1A2B",
+  wine: "#5E2129",
+  rose: "#C46A78",
+  blush: "#E0A9A3",
+  pink: "#F4B6C2",
+  // Oranges, browns, woods
+  coral: "#E5735B",
+  salmon: "#E9967A",
+  terracotta: "#C66B45",
+  rust: "#9C5A3C",
+  orange: "#E07B39",
+  peach: "#F2C6A0",
+  apricot: "#E8B17A",
+  caramel: "#A9743B",
+  brown: "#6F4A2F",
+  chocolate: "#4E342E",
+  coffee: "#5C4433",
+  espresso: "#3B2C26",
+  mocha: "#8A6A53",
+  // Wood tones
+  natural: "#D8B98C",
+  oak: "#B58A52",
+  teak: "#9C6B3F",
+  walnut: "#5C4033",
+  mahogany: "#7B3F32",
+  wenge: "#3D2B22",
+  // Yellows, golds
+  gold: "#C9A227",
+  amber: "#D9A520",
+  mustard: "#C9A227",
+  yellow: "#E8C547",
+  // Greens
+  lime: "#9CB83C",
+  olive: "#6B6B3A",
+  sage: "#9CAF88",
+  green: "#3F7D4E",
+  "forest green": "#2E5D3A",
+  forest: "#2E5D3A",
+  emerald: "#2E8B6B",
+  mint: "#A8D5BA",
+  teal: "#2C7A7B",
+  // Blues
+  turquoise: "#3FB6B2",
+  aqua: "#5BC8C2",
+  cyan: "#3EB6C4",
+  "sky blue": "#7FB5D6",
+  "light blue": "#A9C9DE",
+  "baby blue": "#A7C7E7",
+  blue: "#2D5F8A",
+  denim: "#3B5B7A",
+  cobalt: "#1F4E8C",
+  "royal blue": "#27408B",
+  navy: "#1B2A4A",
+  "navy blue": "#1B2A4A",
+  indigo: "#3B3470",
+  // Purples
+  lavender: "#C9BCE0",
+  lilac: "#C8A2C8",
+  mauve: "#B08CA0",
+  plum: "#6E3E5C",
+  violet: "#7A4E9E",
+  purple: "#5E3A87",
+  // Special
+  multicolor: "",
+}
 
 /**
  * Adds the "AF Home" menu when the spreadsheet opens.
@@ -223,15 +345,25 @@ function buildTemplate() {
 
   writeHelper_(ss, SHEET_CATSUB, data.catRows)
   writeHelper_(ss, SHEET_COMPBRAND, data.brandRows)
+  writeColorSheet_(ss)
 
   let sh = ss.getSheetByName(SHEET_PRODUCTS)
+  const isNewSheet = !sh
   if (!sh) sh = ss.insertSheet(SHEET_PRODUCTS, 0)
-  sh.clear()
-  sh.clearConditionalFormatRules()
 
-  // Wipe ALL leftover data validations in the data area first. This guarantees
-  // variant cells (SKU, Name, Color, prices, sizes…) are free-typed and never
-  // carry a stray Yes/No or other dropdown from a previous build.
+  // Only wipe everything when creating the sheet for the first time. On a
+  // "Build / Refresh" of an existing sheet we PRESERVE the product rows the
+  // user has already typed — we only refresh the header, the dropdown lists,
+  // and the AUTO formulas below (none of which touch the user's data values).
+  if (isNewSheet) {
+    sh.clear()
+    sh.clearConditionalFormatRules()
+  }
+
+  // Re-arm the data validations in the data area. Clearing first guarantees
+  // variant cells (SKU, Name, Color, prices, sizes…) stay free-typed and never
+  // carry a stray Yes/No or other dropdown from a previous build. This clears
+  // validation rules only — the cells' typed-in values are left untouched.
   sh.getRange(2, 1, DATA_ROWS, HEADERS.length).clearDataValidations()
 
   sh.getRange(1, 1, 1, HEADERS.length)
@@ -257,17 +389,26 @@ function buildTemplate() {
   setListValidation_(sh, COL["Room Type"], ROOMS)
   setListValidation_(sh, COL["PV Pricing Tier"], TIERS)
   setListValidation_(sh, COL["Product Type"], TYPES)
+  setListValidation_(sh, COL["Warranty"], WARRANTIES)
   setListValidation_(sh, COL["Status"], STATUSES)
   setListValidation_(sh, COL["Variant Status"], STATUSES)
-  ;["Must Have", "Best Seller", "Sales Promo", "Assembly Required", "Verified"].forEach(
-    function (h) {
-      setListValidation_(sh, COL[h], BOOL)
-    }
-  )
+  ;[
+    "Must Have",
+    "Best Seller",
+    "Sales Promo",
+    "Assembly Required",
+    "Verified",
+  ].forEach(function (h) {
+    setListValidation_(sh, COL[h], STATUSES)
+  })
 
   // The cascade child columns start with no validation; onEdit fills them per row.
   sh.getRange(2, COL["Subcategory"], DATA_ROWS, 1).clearDataValidations()
   sh.getRange(2, COL["Brand"], DATA_ROWS, 1).clearDataValidations()
+
+  // Fill the red "(AUTO)" columns with the PV calculator formulas so PV and the
+  // Reversed PV Multiplier compute themselves as Price DP is typed.
+  applyAutoFormulas_(sh)
 
   notify_(
     "Template ready. Pick a Category to load its Subcategories, and a Merchant to load its Brands, on each row."
@@ -276,7 +417,8 @@ function buildTemplate() {
 
 /** Fetch categories + brands and pre-group them for the cascades. */
 function fetchData_() {
-  const cats = fetchJson_(API_BASE + "/api/categories?per_page=1000").categories || []
+  const cats =
+    fetchJson_(API_BASE + "/api/categories?per_page=1000").categories || []
   const brands = fetchJson_(API_BASE + "/api/product-brands").brands || []
 
   // --- Category -> Subcategory ---
@@ -377,12 +519,146 @@ function writeHelper_(ss, name, rows) {
   sh.hideSheet()
 }
 
+/**
+ * Create the visible "HEX COLOR" reference sheet ([Color Name, Hex]) that the
+ * "Color Hex" column VLOOKUPs against. Seeded from COLOR_HEX only when the sheet
+ * does not already exist, so colors you add/edit by hand survive a rebuild.
+ */
+function writeColorSheet_(ss) {
+  if (ss.getSheetByName(SHEET_HEXCOLOR)) return // preserve the user's color edits
+
+  const sh = ss.insertSheet(SHEET_HEXCOLOR)
+  const rows = [["Color Name", "Hex"]]
+  Object.keys(COLOR_HEX).forEach(function (name) {
+    const hex = COLOR_HEX[name]
+    if (hex) rows.push([name, hex])
+  })
+  sh.getRange(1, 1, rows.length, 2).setValues(rows)
+  sh.getRange(1, 1, 1, 2)
+    .setFontWeight("bold")
+    .setBackground("#334155")
+    .setFontColor("#ffffff")
+  sh.setFrozenRows(1)
+  sh.setColumnWidth(1, 160)
+  sh.setColumnWidth(2, 100)
+
+  // Paint each hex cell in its own color so the table reads at a glance.
+  for (let i = 1; i < rows.length; i++) {
+    try {
+      sh.getRange(i + 1, 2).setBackground(rows[i][1])
+    } catch (err) {
+      // Skip anything that isn't a valid color value.
+    }
+  }
+}
+
 function setListValidation_(sh, col, values) {
   const rule = SpreadsheetApp.newDataValidation()
     .requireValueInList(values, true)
     .setAllowInvalid(true) // allow typing an exact match too
     .build()
   sh.getRange(2, col, DATA_ROWS, 1).setDataValidation(rule)
+}
+
+/** 1-based column number -> spreadsheet column letter (1 -> A, 27 -> AA). */
+function colLetter_(n) {
+  let result = ""
+  let x = n
+  while (x > 0) {
+    const remainder = (x - 1) % 26
+    result = String.fromCharCode(65 + remainder) + result
+    x = Math.floor((x - 1) / 26)
+  }
+  return result
+}
+
+/**
+ * Fill the red "(AUTO)" columns with formulas that mirror the in-app PV
+ * calculator (AddProductModal `deriveLowEndMultiplier` + `deriveComputedPv`):
+ *   - Low-End tier (or a blank tier, which defaults to Low-End) derives the
+ *     Reversed PV Multiplier from the Dealer (Price DP) band:
+ *       <=999 -> 0.5,  <=5000 -> 0.4,  <25000 -> 0.3,  >=25000 -> 0.2
+ *   - PV = Price DP x Reversed PV Multiplier (rounded to 2 dp).
+ *   - High-End is left blank (its formula is not finalised yet).
+ * Applies to both the product-level and the variant-level AUTO columns; the
+ * variant formulas use the variant's own Price DP and inherit the row's tier.
+ */
+function applyAutoFormulas_(sh) {
+  const dp = colLetter_(COL["Price DP"])
+  const tier = colLetter_(COL["PV Pricing Tier"])
+  const mult = colLetter_(COL["Reversed PV Multiplier (AUTO)"])
+  const vdp = colLetter_(COL["Variant Price DP"])
+  const vmult = colLetter_(COL["Variant Reversed PV Multiplier (AUTO)"])
+  const cname = colLetter_(COL["Color Name"])
+
+  const multiplierFormula = function (transferCol, r) {
+    const t = "$" + transferCol + r
+    return (
+      "=IF(OR($" +
+      tier +
+      r +
+      '="High-End",' +
+      t +
+      '=""),"",' +
+      "IF(" +
+      t +
+      "<=999,0.5,IF(" +
+      t +
+      "<=5000,0.4,IF(" +
+      t +
+      "<25000,0.3,0.2))))"
+    )
+  }
+  const pvFormula = function (transferCol, multiplierCol, r) {
+    const t = "$" + transferCol + r
+    const m = "$" + multiplierCol + r
+    return "=IF(OR(" + t + '="",' + m + '=""),"",ROUND(' + t + "*" + m + ",2))"
+  }
+  // Color Hex = VLOOKUP of Color Name against the "HEX COLOR" sheet; blank when
+  // the name is empty or not found (so a manually typed hex is never replaced
+  // by an error). Matching is case-insensitive.
+  const colorHexFormula = function (r) {
+    const c = "$" + cname + r
+    return (
+      "=IF(" +
+      c +
+      '="","",IFERROR(VLOOKUP(' +
+      c +
+      ",'" +
+      SHEET_HEXCOLOR +
+      "'!$A:$B,2,FALSE),\"\"))"
+    )
+  }
+
+  const multCol = []
+  const pvCol = []
+  const vMultCol = []
+  const vPvCol = []
+  const colorHexCol = []
+  for (let i = 0; i < DATA_ROWS; i++) {
+    const r = i + 2
+    multCol.push([multiplierFormula(dp, r)])
+    pvCol.push([pvFormula(dp, mult, r)])
+    vMultCol.push([multiplierFormula(vdp, r)])
+    vPvCol.push([pvFormula(vdp, vmult, r)])
+    colorHexCol.push([colorHexFormula(r)])
+  }
+
+  sh.getRange(
+    2,
+    COL["Reversed PV Multiplier (AUTO)"],
+    DATA_ROWS,
+    1
+  ).setFormulas(multCol)
+  sh.getRange(2, COL["Product PV (AUTO)"], DATA_ROWS, 1).setFormulas(pvCol)
+  sh.getRange(
+    2,
+    COL["Variant Reversed PV Multiplier (AUTO)"],
+    DATA_ROWS,
+    1
+  ).setFormulas(vMultCol)
+  sh.getRange(2, COL["Variant PV (AUTO)"], DATA_ROWS, 1).setFormulas(vPvCol)
+  sh.getRange(2, COL["Color Hex"], DATA_ROWS, 1).setFormulas(colorHexCol)
 }
 
 /**
@@ -400,9 +676,13 @@ function onEdit(e) {
     const startCol = e.range.getColumn()
     const endCol = startCol + e.range.getNumColumns() - 1
 
-    // Handle single edits and multi-row fills/pastes that span Category/Merchant.
-    const touchesCategory = COL["Category"] >= startCol && COL["Category"] <= endCol
-    const touchesCompany = COL["Merchant"] >= startCol && COL["Merchant"] <= endCol
+    // Handle single edits and multi-row fills/pastes that span these columns.
+    // (Color Name -> Color Hex is handled by the VLOOKUP formula in the sheet,
+    // not here.)
+    const touchesCategory =
+      COL["Category"] >= startCol && COL["Category"] <= endCol
+    const touchesCompany =
+      COL["Merchant"] >= startCol && COL["Merchant"] <= endCol
     if (!touchesCategory && !touchesCompany) return
 
     for (let i = 0; i < numRows; i++) {

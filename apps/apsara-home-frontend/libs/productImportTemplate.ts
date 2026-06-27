@@ -1,15 +1,20 @@
 // Product bulk-import Excel template generator (Excel desktop).
 //
 // Produces an .xlsx whose columns match the product CSV export/import contract
-// in ProductController, plus two helper columns (Subcategory, Company) so the
+// in ProductController, plus two helper columns (Subcategory, Merchant) so the
 // dependent dropdowns make data entry easier.
 //
 // Dropdowns:
 //   - Category .......... flat list of top-level categories (API)
 //   - Subcategory ....... CASCADES from the chosen Category (its children)
-//   - Company ........... flat list of merchants/suppliers (API, from brands)
-//   - Brand ............. CASCADES from the chosen Company (its brands)
-//   - Room Type / Pricing Tier / Product Type / Status / booleans ... flat lists
+//   - Merchant .......... flat list of merchants/suppliers (API, from brands)
+//   - Brand ............. CASCADES from the chosen Merchant (its brands)
+//   - Room Type / Pricing Tier / Product Type / Status / Warranty / booleans ... flat lists
+//   - Variant Status .... flat list (purple variant columns on the right)
+//
+// Variants: use ONE ROW PER VARIANT — repeat the same Parent SKU on every row,
+// fill the product fields on the first row, and the variant (purple) columns on
+// each row. The two variant "(AUTO)" columns compute PV from Variant Price DP.
 //
 // Cascading is implemented with the OFFSET/MATCH/COUNTIF data-validation
 // technique (robust for names containing spaces, "&", commas, etc. — unlike
@@ -34,7 +39,7 @@ export interface TemplateBrand {
   supplier_name?: string | null
 }
 
-type ListKey = "categories" | "companies" | "rooms" | "tiers" | "types" | "statuses" | "bool"
+type ListKey = "categories" | "companies" | "rooms" | "tiers" | "types" | "statuses" | "bool" | "warranties"
 type CascadeSheet = "CatSub" | "CompBrand"
 
 interface TemplateColumn {
@@ -47,18 +52,20 @@ interface TemplateColumn {
   cascade?: { sheet: CascadeSheet; parentHeader: string }
   required?: boolean
   auto?: boolean
+  // Variant column (one row per variant). Tinted purple to mirror the Google Sheet.
+  variant?: boolean
 }
 
 // Order/labels follow ProductController::exportCsv, with Subcategory inserted
-// after Category and Company inserted before Brand.
+// after Category and Merchant inserted before Brand.
 const COLUMNS: TemplateColumn[] = [
   { header: "Main Product Name", width: 28, required: true },
   { header: "Parent SKU", width: 18, required: true },
   { header: "Category", width: 22, list: "categories", required: true },
   { header: "Subcategory", width: 22, cascade: { sheet: "CatSub", parentHeader: "Category" } },
   { header: "Room Type", width: 16, list: "rooms" },
-  { header: "Company", width: 22, list: "companies" },
-  { header: "Brand", width: 20, cascade: { sheet: "CompBrand", parentHeader: "Company" } },
+  { header: "Merchant", width: 22, list: "companies" },
+  { header: "Brand", width: 20, cascade: { sheet: "CompBrand", parentHeader: "Merchant" } },
   { header: "Price SRP", width: 14, required: true },
   { header: "Price DP", width: 14 },
   { header: "Price Member", width: 14 },
@@ -74,7 +81,7 @@ const COLUMNS: TemplateColumn[] = [
   { header: "Description", width: 30 },
   { header: "Specifications", width: 30 },
   { header: "Material", width: 18 },
-  { header: "Warranty", width: 18 },
+  { header: "Warranty", width: 18, list: "warranties" },
   { header: "Images", width: 30 },
   { header: "Product Type", width: 16, list: "types" },
   { header: "Status", width: 12, list: "statuses" },
@@ -83,6 +90,27 @@ const COLUMNS: TemplateColumn[] = [
   { header: "Sales Promo", width: 12, list: "bool" },
   { header: "Assembly Required", width: 16, list: "bool" },
   { header: "Verified", width: 12, list: "bool" },
+  // --- Variant columns (one row per variant) --------------------------------
+  // Repeat the same Parent SKU on every variant row; fill the product fields on
+  // the FIRST row and the variant fields on EACH row. The two "(AUTO)" columns
+  // compute themselves from Variant Price DP (leave them blank).
+  { header: "Variant SKU", width: 18, variant: true },
+  { header: "Variant Name", width: 18, variant: true },
+  { header: "Color Name", width: 16, variant: true },
+  { header: "Color Hex", width: 12, variant: true },
+  { header: "Variant Size", width: 14, variant: true },
+  { header: "Variant Style", width: 14, variant: true },
+  { header: "Variant Width", width: 14, variant: true },
+  { header: "Variant Dimension", width: 16, variant: true },
+  { header: "Variant Height", width: 14, variant: true },
+  { header: "Variant Price SRP", width: 16, variant: true },
+  { header: "Variant Price DP", width: 16, variant: true },
+  { header: "Variant Price Member", width: 18, variant: true },
+  { header: "Variant Reversed PV Multiplier (AUTO)", width: 24, auto: true, variant: true },
+  { header: "Variant PV (AUTO)", width: 16, auto: true, variant: true },
+  { header: "Variant Qty", width: 12, variant: true },
+  { header: "Variant Status", width: 14, list: "statuses", variant: true },
+  { header: "Variant Images", width: 30, variant: true },
 ]
 
 // Rows pre-armed with dropdowns for data entry. Copying a row down in Excel
@@ -233,7 +261,18 @@ export async function downloadProductImportTemplate(opts: {
     tiers: ["Low-End", "High-End"],
     types: ["Simple", "Has Variants"],
     statuses: ["Active", "Inactive"],
-    bool: ["Yes", "No"],
+    bool: ["Active", "Inactive"],
+    // Ready-made Warranty options — keep in sync with AddProductModal WARRANTY_OPTIONS.
+    warranties: [
+      "No Warranty",
+      "15 Days Warranty",
+      "1 Month Warranty",
+      "2 Months Warranty",
+      "3 Months Warranty",
+      "6 Months Warranty",
+      "9 Months Warranty",
+      "1 Year Warranty",
+    ],
   }
 
   // Excel will not evaluate a data-validation formula that references another
@@ -288,6 +327,15 @@ export async function downloadProductImportTemplate(opts: {
     width: column.width ?? 18,
   }))
 
+  // Force SKU columns to Text so long numeric SKUs aren't mangled by Excel into
+  // scientific notation (e.g. 5.75334E+12), which would corrupt the SKU on
+  // import and can collapse distinct SKUs onto the same rounded value.
+  COLUMNS.forEach((column, index) => {
+    if (/sku/i.test(column.header)) {
+      sheet.getColumn(index + 1).numFmt = "@"
+    }
+  })
+
   const headerIndex = new Map<string, number>()
   COLUMNS.forEach((column, index) => headerIndex.set(column.header, index + 1))
 
@@ -301,7 +349,9 @@ export async function downloadProductImportTemplate(opts: {
         ? "FF2563EB"
         : column.cascade
           ? "FF0F766E"
-          : "FF334155"
+          : column.variant
+            ? "FF6D28D9"
+            : "FF334155"
     cell.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 11 }
     cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true }
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: fill } }
@@ -346,6 +396,60 @@ export async function downloadProductImportTemplate(opts: {
       }
     }
   })
+
+  // --- Auto-computed PV formulas -------------------------------------------
+  // Mirrors the in-app PV calculator (AddProductModal `deriveLowEndMultiplier`
+  // + `deriveComputedPv`): for the Low-End tier the Reversed PV Multiplier is
+  // derived from the Dealer (Price DP) band, then PV = Price DP × multiplier.
+  // High-End is left blank (its formula is not finalised yet). These fill in
+  // automatically as soon as Price DP is typed, so the red "(AUTO)" columns no
+  // longer need to be hand-entered.
+  const tierColIdx = headerIndex.get("PV Pricing Tier")
+
+  // Fill the Reversed PV Multiplier + PV "(AUTO)" pair for a given Price DP
+  // column. Used for both the product-level and the variant-level AUTO columns;
+  // the variant formulas use the variant's own Price DP and inherit the row's
+  // PV Pricing Tier.
+  const writeAutoPv = (
+    dpColIdx: number | undefined,
+    multColIdx: number | undefined,
+    pvColIdx: number | undefined
+  ) => {
+    if (!dpColIdx || !tierColIdx || !multColIdx || !pvColIdx) return
+    const dpLetter = columnLetter(dpColIdx)
+    const tierLetter = columnLetter(tierColIdx)
+    const multLetter = columnLetter(multColIdx)
+
+    for (let rowNumber = 2; rowNumber <= DATA_ROWS + 1; rowNumber += 1) {
+      const dp = `$${dpLetter}${rowNumber}`
+      const tier = `$${tierLetter}${rowNumber}`
+      const mult = `$${multLetter}${rowNumber}`
+
+      // Reversed PV Multiplier — auto for Low-End (or a blank tier, which
+      // defaults to Low-End); blank for High-End.
+      sheet.getCell(rowNumber, multColIdx).value = {
+        formula:
+          `IF(OR(${tier}="High-End",${dp}=""),"",` +
+          `IF(${dp}<=999,0.5,IF(${dp}<=5000,0.4,IF(${dp}<25000,0.3,0.2))))`,
+      }
+
+      // PV = Price DP × Reversed PV Multiplier (rounded to 2 dp).
+      sheet.getCell(rowNumber, pvColIdx).value = {
+        formula: `IF(OR(${dp}="",${mult}=""),"",ROUND(${dp}*${mult},2))`,
+      }
+    }
+  }
+
+  writeAutoPv(
+    headerIndex.get("Price DP"),
+    headerIndex.get("Reversed PV Multiplier (AUTO)"),
+    headerIndex.get("Product PV (AUTO)")
+  )
+  writeAutoPv(
+    headerIndex.get("Variant Price DP"),
+    headerIndex.get("Variant Reversed PV Multiplier (AUTO)"),
+    headerIndex.get("Variant PV (AUTO)")
+  )
 
   const buffer = await workbook.xlsx.writeBuffer()
   const blob = new Blob([buffer], {

@@ -679,7 +679,8 @@ export interface CreateProductVariantPayload {
 
 interface ProductsQueryParams {
   page?: number
-  perPage?: number
+  // "all" tells the backend to return every product (no pagination cap).
+  perPage?: number | "all"
   search?: string
   status?: string
   catId?: number
