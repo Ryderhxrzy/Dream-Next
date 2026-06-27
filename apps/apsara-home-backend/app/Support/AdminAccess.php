@@ -87,7 +87,7 @@ class AdminAccess
         return match ($level) {
             1 => self::PERMISSIONS,
             2 => ['dashboard', 'orders', 'interior_requests', 'products', 'shipping', 'web_content', 'settings_users', 'payments', 'expenses', 'email_blast', 'conversations', 'settings'],
-            3 => ['dashboard', 'members', 'orders', 'interior_requests'],
+            3 => ['dashboard', 'members', 'orders', 'interior_requests', 'conversations'],
             4 => ['dashboard', 'products', 'web_content'],
             7 => ['dashboard', 'orders', 'interior_requests', 'products', 'shipping'],
             8 => ['dashboard', 'products', 'suppliers'],

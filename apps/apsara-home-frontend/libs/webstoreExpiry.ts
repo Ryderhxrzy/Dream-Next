@@ -106,6 +106,46 @@ export function computeEndDateRaw(
   return currentEnd
 }
 
+export function computePeriodEnd(
+  periodStart: Date,
+  billingOption: string | null | undefined,
+  plan: string | null | undefined,
+  planTermMonths: number | null | undefined,
+  planTerm: string | null | undefined
+): Date | null {
+  const billing = String(billingOption ?? "").toLowerCase()
+  const planStr = String(plan ?? "").toLowerCase()
+  const termMonths = Number(planTermMonths ?? 0)
+  const termStr = String(planTerm ?? "").toLowerCase()
+  const end = new Date(periodStart)
+  if (billing === "monthly") {
+    end.setMonth(end.getMonth() + 1)
+    return end
+  }
+  if (planStr === "test" || termStr.includes("day")) {
+    const dayMatch = termStr.match(/(\d+)\s*day/)
+    end.setDate(end.getDate() + (dayMatch ? parseInt(dayMatch[1], 10) : 2))
+    return end
+  }
+  if (termMonths > 0) {
+    end.setMonth(end.getMonth() + termMonths)
+    return end
+  }
+  if (planStr === "quarterly") {
+    end.setMonth(end.getMonth() + 3)
+    return end
+  }
+  if (planStr === "semi_annual" || planStr === "semi-annual") {
+    end.setMonth(end.getMonth() + 6)
+    return end
+  }
+  if (planStr === "annual") {
+    end.setFullYear(end.getFullYear() + 1)
+    return end
+  }
+  return null
+}
+
 export function isWebstoreRequestExpired(item: {
   status?: string | null
   approved_at?: string | null

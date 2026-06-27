@@ -3929,11 +3929,11 @@ class AuthController extends Controller
             'email' => (string) ($payload['email'] ?? ''),
             'slug_name' => (string) ($payload['slug_name'] ?? ''),
             'display_name' => (string) ($payload['display_name'] ?? ''),
-            'plan' => (string) ($payload['plan'] ?? ''),
-            'plan_term' => (string) ($payload['plan_term'] ?? ''),
-            'plan_term_months' => (int) ($payload['plan_term_months'] ?? 0),
-            'subscription_fee' => (int) ($payload['subscription_fee'] ?? 0),
-            'effective_monthly' => (int) ($payload['effective_monthly'] ?? 0),
+            'plan' => (string) ($activePayload['plan'] ?? $payload['plan'] ?? ''),
+            'plan_term' => (string) ($activePayload['plan_term'] ?? $payload['plan_term'] ?? ''),
+            'plan_term_months' => (int) ($activePayload['plan_term_months'] ?? $payload['plan_term_months'] ?? 0),
+            'subscription_fee' => (int) ($activePayload['subscription_fee'] ?? $payload['subscription_fee'] ?? 0),
+            'effective_monthly' => (int) ($activePayload['effective_monthly'] ?? $payload['effective_monthly'] ?? 0),
             'billing_option' => (string) ($activePayload['billing_option'] ?? $payload['billing_option'] ?? ''),
             'payment_method' => (string) ($activePayload['payment_method'] ?? $payload['payment_method'] ?? ''),
             'checkout_id' => (string) ($activePayload['checkout_id'] ?? $payload['checkout_id'] ?? ''),
@@ -3957,6 +3957,7 @@ class AuthController extends Controller
                 (string) ($payload['email'] ?? ''),
                 (string) ($payload['slug_name'] ?? '')
             ) ? 'synced' : 'not_synced',
+            'approved_at' => $this->webstoreApprovedAt($ticketId),
             'reviewed_at' => $payload['reviewed_at'] ?? null,
             'latest_receipt_status' => $latestReceiptStatus,
             'latest_receipt_message' => $latestReceiptMessage,
@@ -3965,6 +3966,29 @@ class AuthController extends Controller
             'latest_receipt_urls' => $latestReceiptUrls,
             'created_at' => $ticket->t_date ? (string) $ticket->t_date : null,
         ];
+    }
+
+    private function webstoreApprovedAt(int $ticketId): ?string
+    {
+        $decisionRows = DB::table('tbl_tickets_details')
+            ->where('t_id', $ticketId)
+            ->whereIn('td_replystat', [1, 2])
+            ->orderByDesc('td_id')
+            ->get();
+        foreach ($decisionRows as $row) {
+            $payload = $this->decodeWebstorePayload($row->td_content ?? null);
+            if (($payload['type'] ?? '') !== 'webstore_request_decision') {
+                continue;
+            }
+            if (($payload['decision'] ?? '') !== 'approved') {
+                continue;
+            }
+            $reviewedAt = trim((string) ($payload['reviewed_at'] ?? ''));
+            if ($reviewedAt !== '') {
+                return $reviewedAt;
+            }
+        }
+        return null;
     }
 
     private function calculateWebstoreSubscriptionProgress(int $ticketId): array

@@ -1461,14 +1461,23 @@ export default function ByBrandPageMain() {
                           <div className="flex flex-col justify-center flex-1 p-4 relative">
                             <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-sky-500 dark:group-hover:text-sky-400 transition-colors">{product.name}</h3>
                             <div className="flex items-baseline gap-2 mb-2">
-                              <span className="text-lg font-bold text-sky-500 dark:text-sky-400">
-                                {'\u20b1'}{Number(product.priceSrp ?? product.priceDp ?? 0).toLocaleString()}
-                              </span>
-                              {product.priceMember && Number(product.priceMember) > 0 && Number(product.priceMember) < Number(product.priceSrp ?? product.priceDp ?? 0) && (
-                                <span className="text-sm text-gray-400 dark:text-gray-500 line-through">
-                                  {'\u20b1'}{Number(product.priceSrp ?? product.priceDp ?? 0).toLocaleString()}
-                                </span>
-                              )}
+                              {(() => {
+                                const srp = Number(product.priceSrp ?? product.priceDp ?? 0)
+                                const member = Number(product.priceMember ?? 0)
+                                const hasMember = isLoggedIn && member > 0 && member < srp
+                                return (
+                                  <>
+                                    <span className="text-lg font-bold text-sky-500 dark:text-sky-400">
+                                      {'\u20b1'}{(hasMember ? member : srp).toLocaleString()}
+                                    </span>
+                                    {hasMember && (
+                                      <span className="text-sm text-gray-400 dark:text-gray-500 line-through">
+                                        {'\u20b1'}{srp.toLocaleString()}
+                                      </span>
+                                    )}
+                                  </>
+                                )
+                              })()}
                             </div>
                             <div className="flex items-center gap-2">
                               {product.prodpv && Number(product.prodpv) > 0 && (
