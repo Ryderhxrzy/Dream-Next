@@ -74,6 +74,11 @@ export type CreateSectionPayload =
   | CarouselPayload
   | ProductsPayload
 
+// ── Brand profile cover photo ──
+export interface BrandCover {
+  image_url: string
+}
+
 export const supplierBrandHomeApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getBrandHome: builder.query<{ sections: HomeSection[] }, number>({
@@ -127,6 +132,26 @@ export const supplierBrandHomeApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["BrandHome"],
     }),
+
+    getBrandCover: builder.query<{ cover: BrandCover | null }, number>({
+      query: (brandId) => ({
+        url: `/api/supplier/brands/${brandId}/cover`,
+        method: "GET",
+      }),
+      providesTags: ["BrandCover"],
+    }),
+
+    saveBrandCover: builder.mutation<
+      { message: string; cover: BrandCover | null },
+      { brandId: number; image_url: string }
+    >({
+      query: ({ brandId, image_url }) => ({
+        url: `/api/supplier/brands/${brandId}/cover`,
+        method: "PUT",
+        body: { image_url },
+      }),
+      invalidatesTags: ["BrandCover"],
+    }),
   }),
 })
 
@@ -136,4 +161,6 @@ export const {
   useUpdateHomeSectionMutation,
   useDeleteHomeSectionMutation,
   useReorderHomeSectionsMutation,
+  useGetBrandCoverQuery,
+  useSaveBrandCoverMutation,
 } = supplierBrandHomeApi
