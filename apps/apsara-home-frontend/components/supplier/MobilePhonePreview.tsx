@@ -4,16 +4,17 @@ import { useRef } from "react"
 import {
   BadgeCheck,
   ChevronLeft,
-  Copy,
+  ChevronRight,
+  GalleryHorizontalEnd,
   Heart,
+  Image as ImageIcon,
   MoreHorizontal,
   Search,
+  ShoppingBag,
   Star,
-  Tag,
-  Ticket,
-  TrendingUp,
   Users,
 } from "lucide-react"
+import type { HomeSection } from "@/store/api/supplierBrandHomeApi"
 
 // Palette mirrored from the mobile app (src/constants/colors.ts)
 const C = {
@@ -26,24 +27,6 @@ const C = {
   cardBorder: "#e2e8f0",
   divider: "#eef2f7",
 }
-
-const VOUCHERS = [
-  { id: 1, discount: "30%", description: "Discount on all products", code: "SAVE30", minSpend: "₱500" },
-  { id: 2, discount: "₱200", description: "Off on purchases", code: "BRAND200", minSpend: "₱1000" },
-  { id: 3, discount: "25%", description: "Special discount", code: "SPECIAL25", minSpend: "₱750" },
-]
-
-const FEATURED = [
-  { id: 1, name: "Modern Fabric Sofa", price: 12999, original: 15999, gradient: "from-amber-200 to-orange-300" },
-  { id: 2, name: "Oak Dining Table", price: 8499, original: 9999, gradient: "from-emerald-200 to-teal-300" },
-  { id: 3, name: "Velvet Accent Chair", price: 4299, original: 5500, gradient: "from-rose-200 to-pink-300" },
-]
-
-const BEST = [
-  { id: 4, name: "Minimalist Bookshelf", price: 3999, original: 4999, gradient: "from-sky-200 to-blue-300" },
-  { id: 5, name: "Linen Bed Frame", price: 15999, original: 18999, gradient: "from-violet-200 to-purple-300" },
-  { id: 6, name: "Rattan Lounge Set", price: 22999, original: 27999, gradient: "from-lime-200 to-green-300" },
-]
 
 const TABS = ["Home", "Products", "Categories"] as const
 
@@ -101,89 +84,96 @@ function DragScroll({
   )
 }
 
-function ProductCard({
+// ── Dynamic, DB-driven section renderers ─────────────────────────────────────
+
+function DbProductCard({
   name,
   price,
-  original,
-  gradient,
+  image,
 }: {
   name: string
-  price: number
-  original: number
-  gradient: string
+  price?: number | null
+  image?: string | null
 }) {
-  const discountPct = Math.round(((original - price) / original) * 100)
-
   return (
     <div
-      className="w-[108px] shrink-0 overflow-hidden rounded-lg border bg-[#f8f9fa]"
+      className="w-[88px] shrink-0 overflow-hidden rounded-lg border bg-[#f8f9fa]"
       style={{ borderColor: C.cardBorder }}
     >
-      {/* Image */}
-      <div className={`relative h-[88px] w-full bg-gradient-to-br ${gradient}`}>
-        {/* Discount ribbon (top-left) */}
-        <div
-          className="absolute left-0 top-0 flex items-center gap-0.5 rounded-br-lg px-1 py-0.5"
-          style={{ backgroundColor: C.sky, opacity: 0.92 }}
-        >
-          <Tag className="h-2 w-2 text-white" strokeWidth={2.5} />
-          <span className="text-[6px] font-bold text-white">Enjoy {discountPct}% OFF</span>
-        </div>
-        {/* Wishlist (top-right) */}
-        <div className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-black/40">
-          <Heart className="h-2.5 w-2.5 text-white" />
-        </div>
+      <div className="relative h-[72px] w-full bg-slate-100">
+        {image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={image} alt={name} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-slate-300">
+            <ShoppingBag className="h-4 w-4" />
+          </div>
+        )}
       </div>
-
-      <div className="h-px w-full" style={{ backgroundColor: C.cardBorder }} />
-
-      {/* Info */}
-      <div className="px-1.5 py-1.5">
+      <div className="px-1.5 py-1">
         <p className="truncate text-[8px] font-semibold" style={{ color: C.text }}>
           {name}
         </p>
-
-        {/* Badges row */}
-        <div className="mt-1 flex gap-1">
-          <span
-            className="flex items-center gap-0.5 rounded px-1 py-0.5"
-            style={{ background: `linear-gradient(135deg, ${C.sky}, ${C.skyDark})` }}
-          >
-            <TrendingUp className="h-1.5 w-1.5 text-white" strokeWidth={2.5} />
-            <span className="text-[5px] font-bold text-white">PV 12</span>
-          </span>
-          <span
-            className="flex items-center gap-0.5 rounded px-1 py-0.5"
-            style={{ background: "linear-gradient(135deg, #ef4444, #dc2626)" }}
-          >
-            <Tag className="h-1.5 w-1.5 text-white" strokeWidth={2.5} />
-            <span className="text-[5px] font-bold text-white">
-              Save ₱{(original - price).toLocaleString()}
-            </span>
-          </span>
-        </div>
-
-        {/* Price */}
-        <div className="mt-1 flex items-center gap-1">
-          <span className="text-[9px] font-extrabold" style={{ color: C.sky }}>
+        {price != null && (
+          <p className="mt-0.5 text-[9px] font-extrabold" style={{ color: C.sky }}>
             ₱{price.toLocaleString()}
-          </span>
-          <span className="text-[7px] line-through" style={{ color: C.textSecondary }}>
-            ₱{original.toLocaleString()}
-          </span>
-        </div>
+          </p>
+        )}
       </div>
     </div>
   )
 }
 
-function SectionCard({
-  title,
-  children,
-}: {
-  title: string
-  children: React.ReactNode
-}) {
+function PreviewSection({ section }: { section: HomeSection }) {
+  // Banner — single full-width image.
+  if (section.type === "banner") {
+    const url = section.banner?.image_url
+    return (
+      <div className="mb-2 overflow-hidden rounded-lg bg-slate-100">
+        {url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={url} alt="Banner" className="aspect-[16/7] w-full object-cover" />
+        ) : (
+          <div className="flex aspect-[16/7] w-full items-center justify-center text-slate-300">
+            <ImageIcon className="h-5 w-5" />
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Carousel — first slide + dot indicators.
+  if (section.type === "carousel") {
+    const items = section.items ?? []
+    const first = items[0]?.image_url
+    return (
+      <div className="relative mb-2 overflow-hidden rounded-lg bg-slate-100">
+        {first ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={first} alt="Carousel" className="aspect-[16/7] w-full object-cover" />
+        ) : (
+          <div className="flex aspect-[16/7] w-full items-center justify-center text-slate-300">
+            <GalleryHorizontalEnd className="h-5 w-5" />
+          </div>
+        )}
+        {items.length > 1 && (
+          <div className="absolute bottom-1.5 left-1/2 flex -translate-x-1/2 gap-1">
+            {items.map((it, i) => (
+              <span
+                key={it.id ?? i}
+                className={`h-1 rounded-full ${i === 0 ? "w-2.5" : "w-1"}`}
+                style={{ backgroundColor: i === 0 ? C.sky : "#cbd5e1" }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Products — label + button header, then a scrollable product row.
+  const ps = section.product_section
+  const products = ps?.products ?? []
   return (
     <div
       className="mb-2 overflow-hidden rounded-lg border bg-white"
@@ -193,15 +183,23 @@ function SectionCard({
         className="flex items-center justify-between border-b px-2 py-1.5"
         style={{ borderColor: C.divider }}
       >
-        <p className="text-[10px] font-extrabold" style={{ color: C.text }}>
-          {title}
+        <p className="truncate text-[10px] font-extrabold" style={{ color: C.text }}>
+          {ps?.label || "Products"}
         </p>
-        <span className="text-[8px] font-bold" style={{ color: C.sky }}>
-          See More
-        </span>
+        {ps?.button_text && (
+          <span
+            className="inline-flex shrink-0 items-center gap-0.5 text-[8px] font-bold"
+            style={{ color: C.sky }}
+          >
+            {ps.button_text}
+            <ChevronRight className="h-2 w-2" />
+          </span>
+        )}
       </div>
       <DragScroll axis="x" className="flex gap-1.5 p-1.5">
-        {children}
+        {products.map((p) => (
+          <DbProductCard key={p.id} name={p.name} price={p.price} image={p.image} />
+        ))}
       </DragScroll>
     </div>
   )
@@ -210,11 +208,13 @@ function SectionCard({
 interface MobilePhonePreviewProps {
   brandName?: string
   brandImage?: string | null
+  sections?: HomeSection[]
 }
 
 export default function MobilePhonePreview({
   brandName = "Your Brand",
   brandImage = null,
+  sections = [],
 }: MobilePhonePreviewProps) {
   const brandInitial = brandName.trim().charAt(0).toUpperCase() || "?"
 
@@ -354,90 +354,23 @@ export default function MobilePhonePreview({
                   </div>
                 </div>
 
-                {/* ── Scrollable content (drag to scroll, mobile feel) ── */}
+                {/* ── Scrollable content — dynamic, from the DB ── */}
                 <DragScroll axis="y" className="flex-1 p-2">
-                  {/* Voucher section */}
-                  <div
-                    className="mb-2 overflow-hidden rounded-lg border bg-white"
-                    style={{ borderColor: C.cardBorder }}
-                  >
-                    <div className="flex items-center justify-between px-2 py-1.5">
-                      <div>
-                        <p className="text-[10px] font-bold" style={{ color: C.text }}>
-                          Special Offers
-                        </p>
-                        <p className="text-[7px]" style={{ color: C.textSecondary }}>
-                          Check out available vouchers
-                        </p>
-                      </div>
-                      <Ticket className="h-4 w-4" style={{ color: C.sky }} />
+                  {sections.length === 0 ? (
+                    <div className="flex h-full flex-col items-center justify-center px-4 text-center">
+                      <ImageIcon className="h-6 w-6 text-slate-300" />
+                      <p className="mt-2 text-[10px] font-semibold" style={{ color: C.textSecondary }}>
+                        No sections yet
+                      </p>
+                      <p className="text-[8px]" style={{ color: C.textSecondary }}>
+                        Add a banner, carousel, or product section to see it here.
+                      </p>
                     </div>
-
-                    <DragScroll axis="x" className="flex gap-1.5 px-2 pb-2">
-                      {VOUCHERS.map((v) => (
-                        <div
-                          key={v.id}
-                          className="flex w-[140px] shrink-0 overflow-hidden rounded-lg border py-1.5"
-                          style={{ borderColor: C.sky, backgroundColor: "#f9fafb" }}
-                        >
-                          <div className="flex items-center justify-center px-2">
-                            <div className="text-center">
-                              <p className="text-[12px] font-extrabold" style={{ color: C.sky }}>
-                                {v.discount}
-                              </p>
-                              <p className="text-[7px] font-bold" style={{ color: C.sky }}>
-                                OFF
-                              </p>
-                            </div>
-                          </div>
-                          <div className="my-1 w-px" style={{ backgroundColor: C.sky, opacity: 0.3 }} />
-                          <div className="flex flex-1 flex-col justify-center px-1.5">
-                            <p className="truncate text-[8px] font-semibold" style={{ color: C.text }}>
-                              {v.description}
-                            </p>
-                            <p className="text-[7px] font-semibold" style={{ color: C.textSecondary }}>
-                              {v.code}
-                            </p>
-                            <p className="text-[6px]" style={{ color: C.textSecondary }}>
-                              Min. {v.minSpend}
-                            </p>
-                            <div
-                              className="mt-1 flex items-center justify-center gap-0.5 rounded py-0.5"
-                              style={{ backgroundColor: "#e0f2fe" }}
-                            >
-                              <Copy className="h-2 w-2" style={{ color: C.sky }} />
-                              <span className="text-[7px] font-semibold" style={{ color: C.sky }}>
-                                Copy
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </DragScroll>
-                  </div>
-
-                  {/* Featured products */}
-                  <SectionCard title="Featured Products">
-                    {FEATURED.map((p) => (
-                      <ProductCard key={p.id} {...p} />
-                    ))}
-                  </SectionCard>
-
-                  {/* Banner carousel */}
-                  <div className="relative mb-2 h-20 overflow-hidden rounded-lg">
-                    <div className="h-full w-full bg-gradient-to-r from-sky-400 via-cyan-400 to-blue-400" />
-                    <div className="absolute bottom-1.5 left-1/2 flex -translate-x-1/2 gap-1">
-                      <span className="h-1 w-1 rounded-full" style={{ backgroundColor: C.sky }} />
-                      <span className="h-1 w-1 rounded-full bg-slate-300" />
-                    </div>
-                  </div>
-
-                  {/* Best products */}
-                  <SectionCard title="Best Products">
-                    {BEST.map((p) => (
-                      <ProductCard key={p.id} {...p} />
-                    ))}
-                  </SectionCard>
+                  ) : (
+                    sections.map((section) => (
+                      <PreviewSection key={section.id} section={section} />
+                    ))
+                  )}
                 </DragScroll>
 
                 {/* Home indicator */}
