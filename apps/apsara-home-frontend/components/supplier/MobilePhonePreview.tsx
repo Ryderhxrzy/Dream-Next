@@ -14,7 +14,8 @@ import {
   Star,
   Users,
 } from "lucide-react"
-import type { HomeSection } from "@/store/api/supplierBrandHomeApi"
+import type { HomeSection, SectionProduct } from "@/store/api/supplierBrandHomeApi"
+import { getPriceInfo, peso } from "./mobileHome/productPrice"
 
 // Palette mirrored from the mobile app (src/constants/colors.ts)
 const C = {
@@ -86,39 +87,68 @@ function DragScroll({
 
 // ── Dynamic, DB-driven section renderers ─────────────────────────────────────
 
-function DbProductCard({
-  name,
-  price,
-  image,
-}: {
-  name: string
-  price?: number | null
-  image?: string | null
-}) {
+function DbProductCard({ product }: { product: SectionProduct }) {
+  const info = getPriceInfo(product)
   return (
     <div
-      className="w-[88px] shrink-0 overflow-hidden rounded-lg border bg-[#f8f9fa]"
+      className="w-[92px] shrink-0 overflow-hidden rounded-lg border bg-[#f8f9fa]"
       style={{ borderColor: C.cardBorder }}
     >
       <div className="relative h-[72px] w-full bg-slate-100">
-        {image ? (
+        {product.image ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={image} alt={name} className="h-full w-full object-cover" />
+          <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-slate-300">
             <ShoppingBag className="h-4 w-4" />
           </div>
         )}
-      </div>
-      <div className="px-1.5 py-1">
-        <p className="truncate text-[8px] font-semibold" style={{ color: C.text }}>
-          {name}
-        </p>
-        {price != null && (
-          <p className="mt-0.5 text-[9px] font-extrabold" style={{ color: C.sky }}>
-            ₱{price.toLocaleString()}
-          </p>
+        {/* Discount ribbon (top-left), mirrors ItemCard's "Enjoy X% OFF" */}
+        {info.hasDiscount && (
+          <span
+            className="absolute left-0 top-0 rounded-br-md px-1 py-0.5 text-[7px] font-bold text-white"
+            style={{ backgroundColor: C.sky }}
+          >
+            {info.discountPct}% OFF
+          </span>
         )}
+      </div>
+      <div className="space-y-0.5 px-1.5 py-1">
+        <p
+          className="line-clamp-2 text-[8px] font-semibold leading-tight"
+          style={{ color: C.text }}
+        >
+          {product.name}
+        </p>
+        {/* Badges: PV + Save */}
+        {(info.pv > 0 || info.hasDiscount) && (
+          <div className="flex flex-wrap items-center gap-1">
+            {info.pv > 0 && (
+              <span
+                className="rounded px-1 py-px text-[7px] font-bold text-white"
+                style={{ backgroundColor: C.sky }}
+              >
+                PV {info.pv.toLocaleString()}
+              </span>
+            )}
+            {info.hasDiscount && (
+              <span className="rounded bg-[#ef4444] px-1 py-px text-[7px] font-extrabold text-white">
+                Save {peso(info.save)}
+              </span>
+            )}
+          </div>
+        )}
+        {/* Member price (default) + original struck-through */}
+        <div className="flex items-baseline gap-1">
+          <span className="text-[9px] font-extrabold" style={{ color: C.sky }}>
+            {peso(info.display)}
+          </span>
+          {info.hasDiscount && (
+            <span className="text-[7px] text-slate-400 line-through">
+              {peso(info.original)}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -198,7 +228,7 @@ function PreviewSection({ section }: { section: HomeSection }) {
       </div>
       <DragScroll axis="x" className="flex gap-1.5 p-1.5">
         {products.map((p) => (
-          <DbProductCard key={p.id} name={p.name} price={p.price} image={p.image} />
+          <DbProductCard key={p.id} product={p} />
         ))}
       </DragScroll>
     </div>
