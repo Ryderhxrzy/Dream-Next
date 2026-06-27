@@ -238,15 +238,20 @@ function PreviewSection({ section }: { section: HomeSection }) {
 interface MobilePhonePreviewProps {
   brandName?: string
   brandImage?: string | null
+  coverPhoto?: string | null
   sections?: HomeSection[]
 }
 
 export default function MobilePhonePreview({
   brandName = "Your Brand",
   brandImage = null,
+  coverPhoto = null,
   sections = [],
 }: MobilePhonePreviewProps) {
   const brandInitial = brandName.trim().charAt(0).toUpperCase() || "?"
+  // When a cover photo is set, the header becomes a Facebook-style banner with
+  // the nav + profile details overlaid, so their text flips to white.
+  const onCover = Boolean(coverPhoto)
 
   return (
     <div className="sticky top-6">
@@ -287,29 +292,66 @@ export default function MobilePhonePreview({
                 {/* Notch */}
                 <div className="absolute left-1/2 top-1 z-20 h-3.5 w-16 -translate-x-1/2 rounded-b-2xl bg-black" />
 
-                {/* ── Brand store header (white) ── */}
+                {/* ── Brand store header ── */}
                 <div className="border-b bg-white" style={{ borderColor: C.cardBorder }}>
-                  {/* Search row */}
-                  <div className="flex items-center gap-1.5 px-2 py-1.5">
-                    <ChevronLeft className="h-4 w-4 shrink-0" style={{ color: C.text }} />
-                    <div
-                      className="flex h-6 flex-1 items-center gap-1 rounded-lg px-2"
-                      style={{ backgroundColor: "#f1f5f9" }}
-                    >
-                      <Search className="h-2.5 w-2.5 shrink-0" style={{ color: C.textSecondary }} />
-                      <span className="truncate text-[8px]" style={{ color: C.textSecondary }}>
-                        Search in {brandName}
-                      </span>
+                  {/* Cover banner — the nav (back / search / 3-dots) is overlaid
+                      at the top, Facebook-style. Without a cover it's a plain
+                      white nav row. */}
+                  <div
+                    className={`relative ${onCover ? "min-h-[104px]" : ""}`}
+                    style={
+                      onCover
+                        ? {
+                            backgroundImage: `url(${coverPhoto})`,
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                          }
+                        : undefined
+                    }
+                  >
+                    {/* Top scrim so the overlaid nav stays legible over the photo */}
+                    {onCover && (
+                      <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-black/45 to-transparent" />
+                    )}
+
+                    {/* Nav row — back / search / 3-dots vertically centered */}
+                    <div className="relative z-10 flex items-center gap-1.5 px-2 py-2">
+                      <ChevronLeft
+                        className="h-4 w-4 shrink-0"
+                        style={{ color: onCover ? C.white : C.text }}
+                      />
+                      <div
+                        className="flex h-6 flex-1 items-center gap-1 rounded-lg px-2"
+                        style={{
+                          backgroundColor: onCover
+                            ? "rgba(255,255,255,0.92)"
+                            : "#f1f5f9",
+                        }}
+                      >
+                        <Search className="h-2.5 w-2.5 shrink-0" style={{ color: C.textSecondary }} />
+                        <span className="truncate text-[8px]" style={{ color: C.textSecondary }}>
+                          Search in {brandName}
+                        </span>
+                      </div>
+                      <MoreHorizontal
+                        className="h-4 w-4 shrink-0"
+                        style={{ color: onCover ? C.white : C.text }}
+                      />
                     </div>
-                    <MoreHorizontal className="h-4 w-4 shrink-0" style={{ color: C.text }} />
                   </div>
 
-                  {/* Brand identity row */}
-                  <div className="flex items-center gap-2 px-3 pb-2 pt-1">
-                    {/* Logo */}
+                  {/* Brand identity row — the logo overlaps up onto the cover
+                      (Facebook-style) when one is set. */}
+                  <div className="relative flex items-center gap-2 px-3 pb-2 pt-1">
+                    {/* Logo — when a cover is set it's an enlarged avatar pinned to
+                        overlap the cover, its bottom edge reaching the meta line. */}
                     <div
-                      className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-white"
-                      style={{ borderColor: C.cardBorder }}
+                      className={`flex items-center justify-center overflow-hidden rounded-full bg-white ${
+                        onCover
+                          ? "absolute left-3 -top-4 z-10 h-14 w-14 border-2 border-white shadow-md"
+                          : "h-9 w-9 shrink-0 border"
+                      }`}
+                      style={onCover ? undefined : { borderColor: C.cardBorder }}
                     >
                       {brandImage ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -324,8 +366,8 @@ export default function MobilePhonePreview({
                       )}
                     </div>
 
-                    {/* Name + meta */}
-                    <div className="min-w-0 flex-1">
+                    {/* Name + meta — cleared to the right of the overlapping avatar */}
+                    <div className={`min-w-0 flex-1 ${onCover ? "ml-16" : ""}`}>
                       <div className="flex items-center gap-0.5">
                         <span
                           className="truncate text-[12px] font-extrabold tracking-tight"
