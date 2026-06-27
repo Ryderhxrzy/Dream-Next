@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductBrand;
+use App\Models\SupplierBrandCoverPhoto;
 use App\Models\SupplierBrandHomeBanner;
 use App\Models\SupplierBrandHomeCarouselItem;
 use App\Models\SupplierBrandHomeProductSection;
@@ -181,6 +182,69 @@ class SupplierBrandHomeController extends Controller
         });
 
         return response()->json(['message' => 'Order saved.']);
+    }
+
+    /**
+     * The brand profile cover photo (one per brand), or null if none set.
+     */
+    public function showCover(Request $request, int $brandId): JsonResponse
+    {
+        $supplierId = $this->actingSupplierId($request);
+        if (! $supplierId) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        if (! $this->ownsBrand($supplierId, $brandId)) {
+            return response()->json(['message' => 'This brand does not belong to your account.'], 403);
+        }
+
+        $cover = SupplierBrandCoverPhoto::query()
+            ->where('sbcp_supplier_id', $supplierId)
+            ->where('sbcp_brand_id', $brandId)
+            ->first();
+
+        return response()->json([
+            'cover' => $cover ? ['image_url' => (string) $cover->sbcp_image_url] : null,
+        ]);
+    }
+
+    /**
+     * Set (or replace) the brand profile cover photo. An empty image_url clears it.
+     */
+    public function saveCover(Request $request, int $brandId): JsonResponse
+    {
+        $supplierId = $this->actingSupplierId($request);
+        if (! $supplierId) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        if (! $this->ownsBrand($supplierId, $brandId)) {
+            return response()->json(['message' => 'This brand does not belong to your account.'], 403);
+        }
+
+        $data = $request->validate([
+            'image_url' => 'nullable|string|max:2000',
+        ]);
+        $url = trim((string) ($data['image_url'] ?? ''));
+
+        if ($url === '') {
+            SupplierBrandCoverPhoto::query()
+                ->where('sbcp_supplier_id', $supplierId)
+                ->where('sbcp_brand_id', $brandId)
+                ->delete();
+
+            return response()->json(['message' => 'Cover photo removed.', 'cover' => null]);
+        }
+
+        $cover = SupplierBrandCoverPhoto::query()->updateOrCreate(
+            ['sbcp_brand_id' => $brandId],
+            ['sbcp_supplier_id' => $supplierId, 'sbcp_image_url' => $url],
+        );
+
+        return response()->json([
+            'message' => 'Cover photo saved.',
+            'cover' => ['image_url' => (string) $cover->sbcp_image_url],
+        ]);
     }
 
     // ──────────────────────────────── helpers ────────────────────────────────────
