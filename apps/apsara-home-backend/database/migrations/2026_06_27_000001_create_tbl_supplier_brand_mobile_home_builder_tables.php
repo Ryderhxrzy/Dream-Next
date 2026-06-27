@@ -45,10 +45,6 @@ return new class extends Migration
                 $table->bigIncrements('sbhb_id');
                 $table->unsignedBigInteger('sbhb_section_id');
                 $table->text('sbhb_image_url');
-                // content overlay alignment: top-left | top-center | top-right
-                //                            center-left | center | center-right
-                //                            bottom-left | bottom-center | bottom-right
-                $table->string('sbhb_alignment', 30)->default('center');
                 $table->string('sbhb_link_type', 50)->nullable();    // product | category | url | none
                 $table->string('sbhb_link_target', 500)->nullable(); // ID or URL
                 $table->timestamps();
