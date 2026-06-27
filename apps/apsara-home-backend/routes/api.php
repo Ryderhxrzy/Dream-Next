@@ -694,6 +694,10 @@ Route::middleware(['auth:sanctum', 'supplier.actor'])->group(function () {
     Route::patch('/supplier/brands/{brandId}/home/reorder', [SupplierBrandHomeController::class, 'reorder']);
     Route::patch('/supplier/home/sections/{sectionId}', [SupplierBrandHomeController::class, 'update']);
     Route::delete('/supplier/home/sections/{sectionId}', [SupplierBrandHomeController::class, 'destroy']);
+
+    // Brand profile cover photo (one per brand)
+    Route::get('/supplier/brands/{brandId}/cover', [SupplierBrandHomeController::class, 'showCover']);
+    Route::put('/supplier/brands/{brandId}/cover', [SupplierBrandHomeController::class, 'saveCover']);
     Route::get('/supplier/brand-requests', [BrandRequestController::class, 'index']);
     Route::post('/supplier/brand-requests', [BrandRequestController::class, 'store']);
     Route::post('/supplier/brand-requests/seen', [BrandRequestController::class, 'markSeen']);
