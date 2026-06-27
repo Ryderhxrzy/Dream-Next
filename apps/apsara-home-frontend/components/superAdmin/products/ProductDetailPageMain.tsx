@@ -1,9 +1,10 @@
 ﻿"use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { showErrorToast } from "@/libs/toast"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   useGetAdminProductQuery,
+  useDeleteProductVariantMutation,
   usePatchProductFieldsMutation,
   useUpdateProductVariantMutation,
 } from "@/store/api/productsApi"
@@ -579,6 +580,7 @@ export default function ProductDetailPageMain({
   })
   const [patchProduct] = usePatchProductFieldsMutation()
   const [patchVariant] = useUpdateProductVariantMutation()
+  const [deleteVariant] = useDeleteProductVariantMutation()
 
   const [scope, setScope] = useState<Scope>({ kind: "product" })
   const [search, setSearch] = useState("")
@@ -729,6 +731,30 @@ export default function ProductDetailPageMain({
         (err as { data?: { message?: string } })?.data?.message ??
         "Couldn't save that change."
       showErrorToast(`${scopeKey}: ${message}`)
+    }
+  }
+
+  const handleDeleteVariant = async (variantId: number, variantSku: string) => {
+    const confirmed = window.confirm(
+      `Delete variant ${variantSku || `#${variantId}`}? This cannot be undone.`
+    )
+    if (!confirmed) return
+
+    setSaveState("saving")
+    try {
+      await deleteVariant({ id: productId, variantId }).unwrap()
+      if (scope.kind === "variant" && scope.id === variantId) {
+        setScope({ kind: "product" })
+      }
+      setSaveState("saved")
+      showSuccessToast("Variant deleted.")
+      window.setTimeout(() => setSaveState((s) => (s === "saved" ? "idle" : s)), 1500)
+    } catch (err) {
+      setSaveState("error")
+      const message =
+        (err as { data?: { message?: string } })?.data?.message ??
+        "Couldn't delete that variant."
+      showErrorToast(message)
     }
   }
 
@@ -1378,6 +1404,24 @@ export default function ProductDetailPageMain({
                   {/* Inline variant editor */}
                   {isActive ? (
                     <div className="mt-1 space-y-4 rounded-xl border border-teal-100 bg-teal-50/30 p-4 dark:border-teal-500/20 dark:bg-teal-500/5">
+                      {editMode ? (
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void handleDeleteVariant(
+                                v.id ?? 0,
+                                toStr(d?.pv_sku ?? v.sku)
+                              )
+                            }
+                            disabled={!v.id}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-900/60 dark:bg-slate-950 dark:text-rose-300 dark:hover:bg-rose-950/40"
+                          >
+                            Delete Variant
+                          </button>
+                        </div>
+                      ) : null}
+
                       {variantImages.length > 0 ? (
                         <ImageGallery
                           key={`variant-${scope.kind === "variant" ? scope.id : "x"}`}

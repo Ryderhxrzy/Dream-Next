@@ -10,6 +10,7 @@ import { usePathname } from "next/navigation"
 import Header from "./Header"
 import Sidebar from "./Sidebar"
 
+
 interface DashboardLayoutProps {
   children: React.ReactNode
 }
@@ -21,6 +22,13 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const pathname = usePathname()
   const isBanned =
     (session?.user as { isBanned?: boolean } | undefined)?.isBanned === true
+  const role = String(
+    (session?.user as { role?: string } | undefined)?.role ?? ""
+  ).toLowerCase()
+  const userLevelId = Number(
+    (session?.user as { userLevelId?: number } | undefined)?.userLevelId ?? 0
+  )
+  const isSupplierAdmin = role === "supplier_admin" || userLevelId === 8
   const sessionAccessToken = String(
     (session?.user as { accessToken?: string } | undefined)?.accessToken ?? ""
   )
@@ -65,7 +73,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         </main>
       </div>
 
-      {/* ── Ban Overlay ── */}
+{/* ── Ban Overlay ── */}
       <AnimatePresence>
         {isBanned && (
           <motion.div
