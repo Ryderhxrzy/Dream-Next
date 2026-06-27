@@ -223,7 +223,6 @@ export default function SupplierLayoutShell({
     <div className="relative flex min-h-screen overflow-hidden bg-[linear-gradient(180deg,#f6fbff_0%,#eef4fb_42%,#edf2f7_100%)] text-slate-900 dark:bg-[radial-gradient(circle_at_top,#14263a_0%,#09111d_42%,#050914_100%)] dark:text-slate-100">
       <div className="pointer-events-none absolute inset-0 opacity-90">
         <div className="absolute -top-16 -left-28 h-80 w-80 rounded-full bg-cyan-300/25 blur-3xl dark:bg-cyan-500/10" />
-        <div className="absolute top-16 -right-24 h-72 w-72 rounded-full bg-sky-300/20 blur-3xl dark:bg-indigo-500/10" />
         <div className="absolute -bottom-24 left-1/3 h-72 w-72 rounded-full bg-emerald-200/20 blur-3xl dark:bg-emerald-500/10" />
       </div>
 
