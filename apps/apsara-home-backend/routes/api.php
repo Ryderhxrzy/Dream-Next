@@ -51,6 +51,7 @@ use App\Http\Controllers\Api\ProductViewerController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\ServiceInquiryController;
 use App\Http\Controllers\Api\BrandRequestController;
+use App\Http\Controllers\Api\SupplierBrandHomeController;
 use App\Http\Controllers\Api\TotpController;
 use App\Http\Controllers\Api\GeminiController;
 use App\Http\Controllers\Api\KnowledgeBaseController;
@@ -686,6 +687,13 @@ Route::middleware(['auth:sanctum', 'supplier.actor'])->prefix('supplier/auth')->
 Route::middleware(['auth:sanctum', 'supplier.actor'])->group(function () {
     Route::get('/supplier/brands', [BrandRequestController::class, 'myBrands']);
     Route::get('/supplier/brands/{id}/products', [BrandRequestController::class, 'myBrandProducts']);
+
+    // Mobile Home Builder (per-brand sections: banner / carousel / products)
+    Route::get('/supplier/brands/{brandId}/home', [SupplierBrandHomeController::class, 'index']);
+    Route::post('/supplier/brands/{brandId}/home/sections', [SupplierBrandHomeController::class, 'store']);
+    Route::patch('/supplier/brands/{brandId}/home/reorder', [SupplierBrandHomeController::class, 'reorder']);
+    Route::patch('/supplier/home/sections/{sectionId}', [SupplierBrandHomeController::class, 'update']);
+    Route::delete('/supplier/home/sections/{sectionId}', [SupplierBrandHomeController::class, 'destroy']);
     Route::get('/supplier/brand-requests', [BrandRequestController::class, 'index']);
     Route::post('/supplier/brand-requests', [BrandRequestController::class, 'store']);
     Route::post('/supplier/brand-requests/seen', [BrandRequestController::class, 'markSeen']);
