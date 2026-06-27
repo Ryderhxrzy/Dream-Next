@@ -10,6 +10,7 @@ import SectionEditor from "@/components/supplier/mobileHome/SectionEditor"
 export default function MobileManagementHomePage() {
   const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null)
   const [previewSections, setPreviewSections] = useState<HomeSection[]>([])
+  const [previewCover, setPreviewCover] = useState<string | null>(null)
   const { data: brandsData, isLoading: isBrandsLoading } = useGetMyBrandsQuery()
   const brands = brandsData?.brands || []
 
@@ -85,6 +86,7 @@ export default function MobileManagementHomePage() {
                 key={selectedBrandId}
                 brandId={selectedBrandId}
                 onSectionsChange={setPreviewSections}
+                onCoverChange={setPreviewCover}
               />
             ) : (
               <p className="py-12 text-center text-sm text-slate-500 dark:text-slate-400">
@@ -99,6 +101,7 @@ export default function MobileManagementHomePage() {
           <MobilePhonePreview
             brandName={selectedBrand?.name ?? "Your Brand"}
             brandImage={selectedBrand?.image ?? null}
+            coverPhoto={previewCover}
             sections={previewSections}
           />
         </div>
