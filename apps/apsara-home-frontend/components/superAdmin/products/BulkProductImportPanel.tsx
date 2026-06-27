@@ -692,9 +692,6 @@ export const parseCsvText = (text: string): ParsedCsv => {
     throw new Error(`Missing required column(s): ${missing.join(", ")}`)
   }
 
-  // Propagate pd_parent_sku to variant-only rows where the user left it blank
-  // (common in spreadsheets: first row has name/sku/category, subsequent variant rows don't)
-  let lastParentSku = ""
 
   const rows = lines
     .slice(1)
@@ -706,18 +703,7 @@ export const parseCsvText = (text: string): ParsedCsv => {
       })
       return normalizeRow(raw)
     })
-    .map((row) => {
-      const sku = (row.pd_parent_sku ?? "").trim()
-      if (sku) {
-        lastParentSku = sku
-        return row
-      }
       // Variant row with no parent SKU — inherit from the last seen product row
-      if ((row.pv_sku ?? "").trim() && lastParentSku) {
-        return { ...row, pd_parent_sku: lastParentSku }
-      }
-      return row
-    })
     .filter((row) => {
       // Skip rows that have no product info AND no variant SKU — these are truly blank rows
       const name = (row.pd_name ?? "").trim()
@@ -907,6 +893,7 @@ export default function BulkProductImportPanel({
   const [importResults, setImportResults] = useState<
     BulkImportProductsResponse["results"] | null
   >(null)
+  const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null)
   const [importErrorModal, setImportErrorModal] = useState<{
     title: string
     details: string
@@ -1468,8 +1455,11 @@ export default function BulkProductImportPanel({
     // Build import rows: apply edits, filter by selection, re-group, normalize
     const rawRowsSource = parsed.rawRows ?? []
     const filteredEditedRaw = rawRowsSource
-      .map((row, i) => ({ ...row, ...(editedCells[i] ?? {}) }))
-      .filter((_, i) => selectedRowIndices.has(i))
+      .map((row, i) => ({
+        row: { ...row, ...(editedCells[i] ?? {}) },
+        originalIndex: i,
+      }))
+      .filter(({ originalIndex }) => selectedRowIndices.has(originalIndex))
 
     if (filteredEditedRaw.length === 0) {
       showErrorToast(
@@ -1478,7 +1468,36 @@ export default function BulkProductImportPanel({
       return
     }
 
-    const groupedForImport = groupVariantRows(filteredEditedRaw)
+    const validationErrors: string[] = []
+    filteredEditedRaw.forEach(({ row, originalIndex }) => {
+      const rowNum = originalIndex + 1
+      const hasParentSku = Boolean(String(row.pd_parent_sku ?? "").trim())
+      const hasVariantSku = Boolean(String(row.pv_sku ?? "").trim())
+
+      if (!hasParentSku) {
+        validationErrors.push(`Row ${rowNum}: Missing pd_parent_sku`)
+      }
+
+      if (hasVariantSku && !hasParentSku) {
+        validationErrors.push(
+          `Row ${rowNum}: Variant rows must include pd_parent_sku so they do not attach to the wrong product`
+        )
+      }
+    })
+
+    if (validationErrors.length > 0) {
+      setImportErrorModal({
+        title: "Validation Failed",
+        details: `Found ${validationErrors.length} validation error(s):\n${validationErrors.join("\n")}`,
+        payload: undefined,
+        checklist: undefined,
+      })
+      return
+    }
+
+    const groupedForImport = groupVariantRows(
+      filteredEditedRaw.map(({ row }) => row)
+    )
 
     const numericImportFields = [
       "pd_catid",
@@ -1542,7 +1561,6 @@ export default function BulkProductImportPanel({
     const payload: BulkImportProductsPayload = { mode: importMode, rows }
 
     // Detailed pre-import validation
-    const validationErrors: string[] = []
     rows.forEach((row, index) => {
       const rowNum = index + 1
       if (!String(row.pd_name ?? "").trim())
@@ -1646,18 +1664,50 @@ export default function BulkProductImportPanel({
 
       if (hasFailures) {
         setImportResults(results)
+    const CHUNK_SIZE = 50
+    const chunks: BulkImportProductsRow[][] = []
+    for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+      chunks.push(rows.slice(i, i + CHUNK_SIZE))
+    }
+
+    try {
+      const allResults: BulkImportProductsResponse["results"] = []
+      let totalCreated = 0
+      let totalUpdated = 0
+      let totalFailed = 0
+
+      for (let ci = 0; ci < chunks.length; ci++) {
+        setImportProgress({ current: ci + 1, total: chunks.length })
+        const chunkPayload: BulkImportProductsPayload = { mode: importMode, rows: chunks[ci] }
+        const response = await importProducts(chunkPayload).unwrap()
+
+        totalCreated += response.summary.created
+        totalUpdated += response.summary.updated
+        totalFailed += response.summary.failed
+
+        const offsetRow = ci * CHUNK_SIZE
+        allResults.push(...response.results.map((r) => ({ ...r, row: r.row + offsetRow })))
+      }
+
+      setImportProgress(null)
+
+      const failedRows = allResults.filter((r) => r.status === "failed")
+      const hasFailures = failedRows.length > 0 || totalFailed > 0
+
+      if (hasFailures) {
+        setImportResults(allResults)
         showErrorToast(
-          `Import finished with errors: ${summary.created} created, ${summary.updated} updated, ${summary.failed} failed.`
+          `Import finished with errors: ${totalCreated} created, ${totalUpdated} updated, ${totalFailed} failed.`
         )
-        if (summary.created > 0 || summary.updated > 0) onImported?.()
-      } else if (summary.created === 0 && summary.updated === 0) {
+        if (totalCreated > 0 || totalUpdated > 0) onImported?.()
+      } else if (totalCreated === 0 && totalUpdated === 0) {
         showSuccessToast(
           "No changes detected — all rows already match the current database."
         )
         onClose()
       } else {
         showSuccessToast(
-          `Import finished: ${summary.created} created, ${summary.updated} updated.`
+          `Import finished: ${totalCreated} created, ${totalUpdated} updated.`
         )
         onImported?.()
         onClose()
@@ -1677,6 +1727,10 @@ export default function BulkProductImportPanel({
       const errorData = rawError as {
         status?: number | string
         error?: string
+    } catch (error) {
+      setImportProgress(null)
+      console.error("[DEBUG] Import error:", error)
+      const errorData = error as {
         data?: {
           message?: string
           errors?: Record<string, unknown>
@@ -1850,7 +1904,7 @@ export default function BulkProductImportPanel({
           </div>
         </div>
       ) : null}
-      {isLoading && importStats && (
+      {importProgress !== null && importStats && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 rounded-2xl bg-white/90 backdrop-blur-sm">
           <svg
             className="h-10 w-10 animate-spin text-teal-500"
@@ -1875,6 +1929,19 @@ export default function BulkProductImportPanel({
             <p className="text-base font-bold text-slate-800">
               Importing products…
             </p>
+            {importProgress.total > 1 && (
+              <>
+                <p className="text-sm font-semibold text-teal-600">
+                  Batch {importProgress.current} of {importProgress.total}
+                </p>
+                <div className="mx-auto h-2 w-48 overflow-hidden rounded-full bg-slate-200">
+                  <div
+                    className="h-full rounded-full bg-teal-500 transition-all duration-300"
+                    style={{ width: `${Math.round((importProgress.current / importProgress.total) * 100)}%` }}
+                  />
+                </div>
+              </>
+            )}
             <p className="text-sm text-slate-500">
               <span className="font-semibold text-slate-700">
                 {importStats.total}
