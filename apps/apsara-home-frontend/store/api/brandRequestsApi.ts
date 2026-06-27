@@ -30,6 +30,9 @@ export interface MyBrandProduct {
   name: string
   image?: string | null
   price?: number | null
+  original_price?: number | null
+  member_price?: number | null
+  pv?: number | null
   status: number
 }
 
